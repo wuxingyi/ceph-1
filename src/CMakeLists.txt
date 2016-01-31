@@ -503,6 +503,8 @@ if(BUILD_SHARED_LIBS)
     OUTPUT_NAME ceph-global VERSION "1.0.0" SOVERSION "1")
 endif(BUILD_SHARED_LIBS)
 
+add_subdirectory(lua)
+
 # rados object classes
 add_subdirectory(cls)
 
