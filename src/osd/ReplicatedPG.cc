@@ -3468,7 +3468,8 @@ ReplicatedPG::OpContextUPtr ReplicatedPG::trim_object(const hobject_t &coid)
 	ctx->obs->oi.version,
 	0,
 	osd_reqid_t(),
-	ctx->mtime)
+	ctx->mtime,
+	0)
       );
     if (pool.info.require_rollback()) {
       set<snapid_t> snaps(
@@ -3505,7 +3506,8 @@ ReplicatedPG::OpContextUPtr ReplicatedPG::trim_object(const hobject_t &coid)
 	coi.prior_version,
 	0,
 	osd_reqid_t(),
-	ctx->mtime)
+	ctx->mtime,
+	0)
       );
     if (pool.info.require_rollback()) {
       set<string> changing;
@@ -3536,7 +3538,8 @@ ReplicatedPG::OpContextUPtr ReplicatedPG::trim_object(const hobject_t &coid)
 	ctx->snapset_obc->obs.oi.version,
 	0,
 	osd_reqid_t(),
-	ctx->mtime)
+	ctx->mtime,
+	0)
       );
 
     ctx->snapset_obc->obs.exists = false;
@@ -3564,7 +3567,8 @@ ReplicatedPG::OpContextUPtr ReplicatedPG::trim_object(const hobject_t &coid)
 	ctx->snapset_obc->obs.oi.version,
 	0,
 	osd_reqid_t(),
-	ctx->mtime)
+	ctx->mtime,
+	0)
       );
 
     ctx->snapset_obc->obs.oi.prior_version =
@@ -6404,7 +6408,7 @@ void ReplicatedPG::make_writeable(OpContext *ctx)
     ctx->log.push_back(pg_log_entry_t(pg_log_entry_t::CLONE, coid, ctx->at_version,
 				      ctx->obs->oi.version,
 				      ctx->obs->oi.user_version,
-				      osd_reqid_t(), ctx->new_obs.oi.mtime));
+				      osd_reqid_t(), ctx->new_obs.oi.mtime, 0));
     ::encode(snaps, ctx->log.back().snaps);
     ctx->log.back().mod_desc.create();
 
@@ -6666,7 +6670,7 @@ void ReplicatedPG::finish_ctx(OpContext *ctx, int log_op_type, bool maintain_ssc
 	  ctx->log.push_back(pg_log_entry_t(pg_log_entry_t::DELETE, snapoid,
 	      ctx->at_version,
 	      ctx->snapset_obc->obs.oi.version,
-	      0, osd_reqid_t(), ctx->mtime));
+	      0, osd_reqid_t(), ctx->mtime, 0));
 	  if (pool.info.require_rollback()) {
 	    if (ctx->log.back().mod_desc.rmobject(ctx->at_version.version)) {
 	      ctx->op_t->stash(snapoid, ctx->at_version.version);
@@ -6695,7 +6699,7 @@ void ReplicatedPG::finish_ctx(OpContext *ctx, int log_op_type, bool maintain_ssc
       ctx->log.push_back(pg_log_entry_t(pg_log_entry_t::MODIFY, snapoid,
 					ctx->at_version,
 	                                eversion_t(),
-					0, osd_reqid_t(), ctx->mtime));
+					0, osd_reqid_t(), ctx->mtime, 0));
 
       if (!ctx->snapset_obc)
 	ctx->snapset_obc = get_object_context(snapoid, true);
@@ -6804,7 +6808,7 @@ void ReplicatedPG::finish_ctx(OpContext *ctx, int log_op_type, bool maintain_ssc
   ctx->log.push_back(pg_log_entry_t(log_op_type, soid, ctx->at_version,
 				    ctx->obs->oi.version,
 				    ctx->user_at_version, ctx->reqid,
-				    ctx->mtime));
+				    ctx->mtime, 0));
   if (soid.snap < CEPH_NOSNAP) {
     switch (log_op_type) {
     case pg_log_entry_t::MODIFY:
@@ -8869,7 +8873,7 @@ void ReplicatedPG::handle_watch_timeout(WatchRef watch)
 				    ctx->at_version,
 				    oi.version,
 				    0,
-				    osd_reqid_t(), ctx->mtime));
+				    osd_reqid_t(), ctx->mtime, 0));
 
   oi.prior_version = obc->obs.oi.version;
   oi.version = ctx->at_version;
@@ -9676,7 +9680,7 @@ ObjectContextRef ReplicatedPG::mark_object_lost(ObjectStore::Transaction *t,
 
   // Add log entry
   ++info.last_update.version;
-  pg_log_entry_t e(what, oid, info.last_update, version, 0, osd_reqid_t(), mtime);
+  pg_log_entry_t e(what, oid, info.last_update, version, 0, osd_reqid_t(), mtime, 0);
   pg_log.add(e);
   
   ObjectContextRef obc = get_object_context(oid, true);
@@ -9812,7 +9816,7 @@ void ReplicatedPG::mark_all_unfound_lost(
 	++v.version;
 	pg_log_entry_t e(
 	  pg_log_entry_t::LOST_REVERT, oid, v,
-	  m->second.need, 0, osd_reqid_t(), mtime);
+	  m->second.need, 0, osd_reqid_t(), mtime, 0);
 	e.reverting_to = prev;
 	e.mod_desc.mark_unrollbackable();
 	log_entries.push_back(e);
@@ -9827,7 +9831,7 @@ void ReplicatedPG::mark_all_unfound_lost(
       {
 	++v.version;
 	pg_log_entry_t e(pg_log_entry_t::LOST_DELETE, oid, v, m->second.need,
-		     0, osd_reqid_t(), mtime);
+			 0, osd_reqid_t(), mtime, 0);
 	if (get_osdmap()->test_flag(CEPH_OSDMAP_REQUIRE_JEWEL)) {
 	  if (pool.info.require_rollback()) {
 	    e.mod_desc.try_rmobject(v.version);
@@ -11725,7 +11729,8 @@ void ReplicatedPG::hit_set_persist()
       eversion_t(),
       0,
       osd_reqid_t(),
-      ctx->mtime)
+      ctx->mtime,
+      0)
     );
   if (pool.info.require_rollback()) {
     ctx->log.back().mod_desc.create();
@@ -11760,7 +11765,8 @@ void ReplicatedPG::hit_set_trim(OpContextUPtr &ctx, unsigned max)
 		       p->version,
 		       0,
 		       osd_reqid_t(),
-		       ctx->mtime));
+		       ctx->mtime,
+		       0));
     if (pool.info.require_rollback()) {
       if (ctx->log.back().mod_desc.rmobject(
 	  ctx->at_version.version)) {
