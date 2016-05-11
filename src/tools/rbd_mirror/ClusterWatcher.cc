@@ -110,8 +110,6 @@ void ClusterWatcher::read_pool_peers(PoolPeers *pool_peers,
 
     vector<librbd::mirror_peer_t> configs;
     r = librbd::mirror_peer_list(ioctx, &configs);
-    if (r == -ENOENT)
-      continue; // raced with disabling mirroring
     if (r < 0) {
       derr << "error reading mirroring config for pool " << pool_name
 	   << cpp_strerror(r) << dendl;
