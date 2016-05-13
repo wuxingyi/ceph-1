@@ -1820,6 +1820,9 @@ void RGWStatBucket::execute()
       op_ret = -EINVAL;
     }
   }
+  if (s->bucket_attrs.find(RGW_ATTR_COMPRESSION) != s->bucket_attrs.end()) {
+    ::decode(bucket.size, s->bucket_attrs[RGW_ATTR_COMPRESSION]);
+  }
 }
 
 int RGWListBucket::verify_permission()
@@ -2490,10 +2493,11 @@ void RGWPutObj::execute()
   char calc_md5[CEPH_CRYPTO_MD5_DIGESTSIZE * 2 + 1];
   unsigned char m[CEPH_CRYPTO_MD5_DIGESTSIZE];
   MD5 hash;
-  bufferlist bl, aclbl;
+  bufferlist bl, aclbl, bs;
   int len;
   map<string, string>::iterator iter;
   bool multipart;
+  uint64_t bucket_size = 0;
 
   bool need_calc_md5 = (dlo_manifest == NULL) && (slo_info == NULL);
 
@@ -2679,6 +2683,17 @@ void RGWPutObj::execute()
     attrs[RGW_ATTR_COMPRESSION] = tmp;
   }
 
+  // add attr to bucket to know original size of data
+  if (s->bucket_attrs.find(RGW_ATTR_COMPRESSION) != s->bucket_attrs.end())
+    ::decode(bucket_size, s->bucket_attrs[RGW_ATTR_COMPRESSION]);
+  bucket_size += s->obj_size;
+  ::encode(bucket_size, bs);
+  s->bucket_attrs[RGW_ATTR_COMPRESSION] = bs;
+  op_ret = store->put_bucket_instance_info(s->bucket_info, false, real_time(),
+        &s->bucket_attrs);
+  if (op_ret < 0)
+    ldout(s->cct, 0) << "NOTICE: put_bucket_info on bucket=" << s->bucket.name
+         << " returned err=" << op_ret << dendl;
 
   buf_to_hex(m, CEPH_CRYPTO_MD5_DIGESTSIZE, calc_md5);
   etag = calc_md5;
