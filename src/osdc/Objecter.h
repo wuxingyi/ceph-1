@@ -1979,7 +1979,8 @@ private:
     op_throttle_bytes(cct, "objecter_bytes",
 		      cct->_conf->objecter_inflight_op_bytes),
     op_throttle_ops(cct, "objecter_ops", cct->_conf->objecter_inflight_ops),
-    epoch_barrier(0)
+    epoch_barrier(0),
+    retry_writes_after_first_reply(cct_->conf->objecter_retry_writes_after_first_reply)
   { }
   ~Objecter();
 
@@ -2964,6 +2965,7 @@ public:
 
 private:
   epoch_t epoch_barrier;
+  bool retry_writes_after_first_reply;
 public:
   void set_epoch_barrier(epoch_t epoch);
 };
