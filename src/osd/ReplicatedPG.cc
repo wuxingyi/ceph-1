@@ -3028,7 +3028,9 @@ void ReplicatedPG::execute_ctx(OpContext *ctx)
     return;
   }
 
-  ctx->reply->set_reply_versions(ctx->at_version, ctx->user_at_version);
+  if (!ctx->update_log_only) {
+    ctx->reply->set_reply_versions(ctx->at_version, ctx->user_at_version);
+  }
 
   assert(op->may_write() || op->may_cache());
 
@@ -3059,7 +3061,10 @@ void ReplicatedPG::execute_ctx(OpContext *ctx)
     dout(20) << __func__ << " update_log_only -- result=" << result << dendl;
     assert(result < 0);
     // just append to pg log for dup detection
+    ctx->op_t.reset(pgbackend->get_transaction());
+    ctx->user_at_version = 0;
     prepare_log_update(ctx, pg_log_entry_t::ERROR, result);
+    ctx->result = result;
   } else {
     ctx->register_on_success(
 	[ctx, this]() {
@@ -3116,9 +3121,12 @@ void ReplicatedPG::prepare_and_send_repop(OpContext *ctx)
 	  ctx->reply = NULL;
 	else {
 	  reply = new MOSDOpReply(m, 0, get_osdmap()->get_epoch(), 0, true);
-	  reply->set_reply_versions(ctx->at_version,
-				    ctx->user_at_version);
+	  if (!ctx->update_log_only) {
+	    reply->set_reply_versions(ctx->at_version,
+				      ctx->user_at_version);
+	  }
 	}
+	reply->set_result(ctx->result);
 	reply->add_flags(CEPH_OSD_FLAG_ACK | CEPH_OSD_FLAG_ONDISK);
 	dout(10) << " sending commit on " << *m << " " << reply << dendl;
 	osd->send_message_osd_client(reply, m->get_connection());
