@@ -1980,7 +1980,7 @@ private:
 		      cct->_conf->objecter_inflight_op_bytes),
     op_throttle_ops(cct, "objecter_ops", cct->_conf->objecter_inflight_ops),
     epoch_barrier(0),
-    retry_writes_after_first_reply(cct_->conf->objecter_retry_writes_after_first_reply)
+    retry_writes_after_first_reply(cct->_conf->objecter_retry_writes_after_first_reply)
   { }
   ~Objecter();
 
