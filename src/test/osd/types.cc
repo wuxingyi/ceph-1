@@ -938,6 +938,7 @@ TEST(pg_missing_t, add_next_event)
     EXPECT_FALSE(missing.is_missing(oid));
     missing.add_next_event(e);
     EXPECT_FALSE(missing.is_missing(oid));
+    EXPECT_TRUE(e.reqid_is_indexed());
   }
 }
 

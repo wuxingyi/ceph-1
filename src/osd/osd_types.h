@@ -2608,7 +2608,8 @@ struct pg_log_entry_t {
   }
       
   bool reqid_is_indexed() const {
-    return reqid != osd_reqid_t() && (op == MODIFY || op == DELETE);
+    return reqid != osd_reqid_t() &&
+      (op == MODIFY || op == DELETE || op == ERROR);
   }
 
   string get_key_name() const;
