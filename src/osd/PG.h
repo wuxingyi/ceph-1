@@ -371,6 +371,9 @@ public:
     void remove_location(const hobject_t &hoid, pg_shard_t location) {
       missing_loc[hoid].erase(location);
     }
+    void remove_all_locations(const hobject_t &hoid) {
+      missing_loc[hoid].clear();
+    }
     void add_active_missing(const pg_missing_t &missing) {
       for (map<hobject_t, pg_missing_t::item, hobject_t::BitwiseComparator>::const_iterator i =
 	     missing.missing.begin();

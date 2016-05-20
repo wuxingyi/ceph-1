@@ -9606,12 +9606,12 @@ void ReplicatedPG::recover_got(hobject_t oid, eversion_t v)
   }
 }
 
-
-void ReplicatedPG::failed_push(pg_shard_t from, const hobject_t &soid)
+void ReplicatedPG::failed_push(const list<pg_shard_t> &from, const hobject_t &soid)
 {
   assert(recovering.count(soid));
   recovering.erase(soid);
-  missing_loc.remove_location(soid, from);
+  for (list<pg_shard_t>::const_iterator i = from.begin(); i != from.end() ; ++i)
+    missing_loc.remove_location(soid, *i);
   dout(0) << "failed_push " << soid << " from shard " << from
 	  << ", reps on " << missing_loc.get_locations(soid)
 	  << " unfound? " << missing_loc.is_unfound(soid) << dendl;
