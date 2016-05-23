@@ -34,6 +34,11 @@ using namespace std;
 
 #define SOCKET_PRIORITY_MIN_DELAY 6
 
+// Messenger conditional config flags
+#define MSGR_SHARD_CONNECTIONS          0x0001  // 1 or xio_num_portal_threads portals
+#define MSGR_MANY_CONNECTIONS           0x0002  // a few or xio_max_conns_per_portal connections
+#define MSGR_HEARTBEAT                  0x0004  // a few or osd_heartbeat_min_peers * 4 connections
+
 class Timer;
 
 
@@ -151,13 +156,15 @@ public:
    * @param lname logical name of the messenger in this process (e.g., "client")
    * @param nonce nonce value to uniquely identify this instance on the current host
    * @param features bits for the local connection
+   * @param cflags general set of flags to configure transport resources
    */
   static Messenger *create(CephContext *cct,
                            const string &type,
                            entity_name_t name,
 			   string lname,
                            uint64_t nonce,
-			   uint64_t features = 0);
+			   uint64_t features = 0,
+			   uint64_t cflags = 0);
 
   /**
    * create a new messenger
