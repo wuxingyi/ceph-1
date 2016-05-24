@@ -79,7 +79,7 @@ static ostream& _prefix(std::ostream *_dout, T *t)
 
 void PG::get(const char* tag)
 {
-  ref.inc();
+  ref++;
 #ifdef PG_DEBUG_REFS
   Mutex::Locker l(_ref_id_lock);
   if (!_tag_counts.count(tag)) {
@@ -101,14 +101,14 @@ void PG::put(const char* tag)
     }
   }
 #endif
-  if (ref.dec() == 0)
+  if (--ref== 0)
     delete this;
 }
 
 #ifdef PG_DEBUG_REFS
 uint64_t PG::get_with_id()
 {
-  ref.inc();
+  ref++;
   Mutex::Locker l(_ref_id_lock);
   uint64_t id = ++_ref_id;
   BackTrace bt(0);
@@ -128,7 +128,7 @@ void PG::put_with_id(uint64_t id)
     assert(_live_ids.count(id));
     _live_ids.erase(id);
   }
-  if (ref.dec() == 0)
+  if (--ref == 0)
     delete this;
 }
 
