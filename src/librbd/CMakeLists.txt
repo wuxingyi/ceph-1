@@ -92,3 +92,8 @@ if(${ENABLE_SHARED})
     OUTPUT_NAME rbd)
 endif(${ENABLE_SHARED})
 install(TARGETS librbd DESTINATION lib)
+install(FILES
+  ${CMAKE_SOURCE_DIR}/include/rbd/features.h
+  ${CMAKE_SOURCE_DIR}/include/rbd/librbd.h
+  ${CMAKE_SOURCE_DIR}/include/rbd/librbd.hpp
+  DESTINATION include)
