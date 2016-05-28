@@ -202,7 +202,7 @@ class EventCenter {
 
  public:
   template <typename func>
-  static void submit_to(int i, func &&f, bool nowait = false) {
+  void submit_to(int i, func &&f, bool nowait = false) {
     assert(i < MAX_EVENTCENTER);
     EventCenter *c = global_centers->centers[i];
     if (c->in_thread()) {
