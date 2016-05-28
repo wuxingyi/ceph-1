@@ -59,7 +59,6 @@ ostream& EventCenter::_event_prefix(std::ostream *_dout)
                 << " time_id=" << time_event_next_id << ").";
 }
 
-EventCenter *EventCenter::centers[MAX_EVENTCENTER];
 thread_local EventCenter* local_center = nullptr;
 
 int EventCenter::init(int n, unsigned i)
@@ -68,6 +67,9 @@ int EventCenter::init(int n, unsigned i)
   assert(nevent == 0);
 
   idx = i;
+  cct->lookup_or_create_singleton_object<EventCenter::AssociatedCenters>(
+      global_centers, "AsyncMessenger::EventCenter::global_center");
+  assert(global_centers);
 
 #ifdef HAVE_EPOLL
   driver = new EpollDriver(cct);
@@ -143,7 +145,9 @@ EventCenter::~EventCenter()
 
 void EventCenter::set_owner()
 {
-  centers[idx] = local_center = this;
+  assert(!global_centers->centers[idx]);
+  global_centers->centers[idx] = local_center = this;
+  ldout(cct, 1) << __func__ << " idx=" << idx << " local_center=" << local_center << dendl;
 }
 
 int EventCenter::create_file_event(int fd, int mask, EventCallbackRef ctxt)
