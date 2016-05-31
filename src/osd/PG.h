@@ -32,7 +32,7 @@
 #include "include/stringify.h"
 #include "osd_types.h"
 #include "include/xlist.h"
-#include "include/atomic.h"
+// #include "include/atomic.h"
 #include "SnapMapper.h"
 
 #include "PGLog.h"
@@ -41,6 +41,7 @@
 #include "include/str_list.h"
 #include "PGBackend.h"
 
+#include <atomic>
 #include <list>
 #include <memory>
 #include <string>
@@ -241,7 +242,7 @@ protected:
    * put_unlock() when done with the current pointer (_most common_).
    */  
   mutable Mutex _lock;
-  atomic_t ref;
+  std::atomic_uint ref;
 
 #ifdef PG_DEBUG_REFS
   Mutex _ref_id_lock;

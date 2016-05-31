@@ -617,7 +617,7 @@ void OSDService::promote_throttle_recalibrate()
   utime_t now = ceph_clock_now(NULL);
   double dur = now - last_recalibrate;
   last_recalibrate = now;
-  unsigned prob = promote_probability_millis.read();
+  unsigned prob = promote_probability_millis;
 
   uint64_t target_obj_sec = g_conf->osd_tier_promote_max_objects_sec;
   uint64_t target_bytes_sec = g_conf->osd_tier_promote_max_bytes_sec;
@@ -674,9 +674,9 @@ void OSDService::promote_throttle_recalibrate()
   dout(10) << __func__ << "  actual " << actual
 	   << ", actual/prob ratio " << ratio
 	   << ", adjusted new_prob " << new_prob
-	   << ", prob " << promote_probability_millis.read() << " -> " << prob
+	   << ", prob " << promote_probability_millis << " -> " << prob
 	   << dendl;
-  promote_probability_millis.set(prob);
+  promote_probability_millis = prob;
 
   // set hard limits for this interval to mitigate stampedes
   promote_max_objects = target_obj_sec * OSD::OSD_TICK_INTERVAL * 2;
@@ -2741,9 +2741,9 @@ int OSD::shutdown()
         ++p) {
       dout(20) << " kicking pg " << p->first << dendl;
       p->second->lock();
-      if (p->second->ref.read() != 1) {
+      if (p->second->ref != 1) {
         derr << "pgid " << p->first << " has ref count of "
-            << p->second->ref.read() << dendl;
+            << p->second->ref << dendl;
 #ifdef PG_DEBUG_REFS
 	p->second->dump_live_ids();
 #endif
