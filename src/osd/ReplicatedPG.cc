@@ -2169,6 +2169,9 @@ void ReplicatedPG::record_write_error(OpRequestRef op, const hobject_t &soid,
 	  reply = new MOSDOpReply(m, r, get_osdmap()->get_epoch(),
 				  flags, true);
 	}
+	if (r != -ENOENT) {
+	  reply->set_reply_versions(eversion_t(), 0);
+	}
 	dout(10) << " sending commit on " << *m << " " << reply << dendl;
 	osd->send_message_osd_client(reply, m->get_connection());
       }
