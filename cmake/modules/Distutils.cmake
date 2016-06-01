@@ -1,13 +1,6 @@
-function(distutils_install_module name)
-  if(DEFINED ENV{DESTDIR})
-    get_filename_component(debian_version /etc/debian_version ABSOLUTE)
-    if(EXISTS ${debian_version})
-      set(options "--install-layout=deb")
-    else()
-      set(options "--prefix=/usr")
-    endif()
-  endif()
+include(CMakeParseArguments)
 
+function(distutils_install_module name)
   set(py_srcs setup.py README.rst requirements.txt test-requirements.txt ${name})
   foreach(src ${py_srcs})
     list(APPEND py_clone ${CMAKE_CURRENT_BINARY_DIR}/${src})
@@ -18,9 +11,23 @@ function(distutils_install_module name)
   endforeach()
   add_custom_target(${name}-clone ALL
     DEPENDS ${py_clone})
-  install(CODE
-    "execute_process(COMMAND ${PYTHON_EXECUTABLE} setup.py install ${options} --root=$DESTDIR
-                   WORKING_DIRECTORY \"${CMAKE_CURRENT_BINARY_DIR}\")")
+  cmake_parse_arguments(DU "" INSTALL_SCRIPT "" ${ARGN})
+  install(CODE "
+    if(DEFINED ENV{DESTDIR})
+      if(EXISTS /etc/debian_version)
+        list(APPEND options --install-layout=deb)
+      else()
+        list(APPEND options --prefix=/usr)
+      endif()
+      list(APPEND options --root=\$ENV{DESTDIR})
+      if(${DU_INSTALL_SCRIPT})
+        list(APPEND options --install-script=${DU_INSTALL_SCRIPT})
+      endif()
+    endif()
+    execute_process(
+    COMMAND ${PYTHON_EXECUTABLE}
+        setup.py install \${options}
+    WORKING_DIRECTORY \"${CMAKE_CURRENT_BINARY_DIR}\")")
 endfunction(distutils_install_module)
 
 function(distutils_add_cython_module name src)
